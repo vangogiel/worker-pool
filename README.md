@@ -5,7 +5,9 @@ Implement a program that dispatches tasks to a set of workers, collects and disp
 For example, the following input:
 
 ```
-actions=[Task3(throws after 3s), Task4(compl. after 4s), Task2(compl. after 2s), Task1(throws after 1s)], timeout=8s, workers=4
+actions=[Task3(throws after 3s), Task4(compl. after 4s), Task2(compl. after 2s), Task1(throws after 1s)]
+timeout=8s
+workers=4
 ```
 
 Should return the following result after 4 seconds:
@@ -19,7 +21,9 @@ result.timedOut = []
 And the following input:
 
 ```
-actions=[Task3(throws after 3s), Task5(hangs), Task4(compl. after 4s), Task2(compl. after 2s), Task1(compl. after 1s)], timeout=8s, workers=4
+actions=[Task3(throws after 3s), Task5(hangs), Task4(compl. after 4s), Task2(compl. after 2s), Task1(compl. after 1s)]
+timeout=8s
+workers=4
 ```
 
 Should return following result after 8 seconds:
