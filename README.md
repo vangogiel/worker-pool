@@ -34,7 +34,7 @@ result.failed = [Task3]
 result.timedOut = [Task5]
 ```
 
-## Requirements:
+## Requirements:
 
 - You need to execute tasks before timeout (given as a parameter). Collective duration of all the tasks will surely exceed the timeout, so you cannot execute tasks iteratively one after another.
 - There will be something between 25 and 60 tasks to execute.
