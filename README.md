@@ -37,6 +37,7 @@ result.timedOut = [Task5]
 ## Requirements:
 
 - You need to execute tasks before timeout (given as a parameter). Collective duration of all the tasks will surely exceed the timeout, so you cannot execute tasks iteratively one after another.
+- A worker can only work on one task at a time and cannot be flooded with more tasks than it can handle.
 - There will be something between 25 and 60 tasks to execute.
 - Some of the tasks will work for some time and then finish. Other will fail and its run method will throw an unspecified exception. It can also happen that task hangs and does not return in short time. The program needs to categorize each passed task as successful, failed or timed out.
 - Tasks must be returned in the order of their duration. It's guaranteed that when all tasks are started simultanoussly, each successful task will end in some distinct point in time and there should be no two tasks that finish at the same moment. Order of timed out tasks is not important.
