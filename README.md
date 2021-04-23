@@ -1,6 +1,8 @@
 # Worker Pool coding exercise
 
-Implement a program that dispatches tasks to a set of workers, collects and displays their result in the right order. The workers will concurrently execute these tasks and return the summary of the execution with tasks categorized as successful, failed or timed out. You are free to represent tasks any way you want as long as they expose the desired behaviour.
+Implement a program that dispatches tasks to a set of workers, collects and displays their result in the right order. The workers will concurrently execute these tasks and return the summary of the execution with tasks categorized as successful, failed or timed out.
+
+You are free to represent tasks any way you want as long as they expose the desired behaviour. Likewise, you can use any concurrency pattern you are familiar with.
 
 For example, the following input:
 
