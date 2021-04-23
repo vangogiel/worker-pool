@@ -1,4 +1,4 @@
-# Worker Pool coding exercise
+# Workers
 
 Implement a program that dispatches tasks to a set of workers, collects and displays their result in the right order. The workers will concurrently execute these tasks and return the summary of the execution with tasks categorized as successful, failed or timed out.
 
