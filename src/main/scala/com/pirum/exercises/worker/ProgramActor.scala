@@ -6,13 +6,14 @@ import akka.pattern.after
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 sealed trait Command
 case class ProcessTasks() extends Command
 
 class ProgramActor(
     succeededTasksList: mutable.Buffer[String],
+    failedTasksList: mutable.Buffer[String],
     tasks: List[Task],
     totalTimeout: FiniteDuration
 )(implicit actorSystem: ActorSystem, executionContext: ExecutionContext)
@@ -21,8 +22,9 @@ class ProgramActor(
     tasks.foreach(task => {
       if (task.delay.compare(totalTimeout) < 1) {
         after(task.delay)(task.execute)
-          .onComplete { case Success(_) =>
-            succeededTasksList += task.name
+          .onComplete {
+            case Success(_) => succeededTasksList += task.name
+            case Failure(_) => failedTasksList += task.name
           }
       }
     })
