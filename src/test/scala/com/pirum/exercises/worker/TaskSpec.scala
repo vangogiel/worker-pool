@@ -27,5 +27,14 @@ class TaskSpec extends AnyWordSpecLike with Matchers with Eventually {
         ).execute.failed
       )
     }
+
+    "timeout if TimeoutTask is specified" in {
+      eventually(
+        !TimeoutTask(
+          "test-task",
+          FiniteDuration(1, TimeUnit.SECONDS)
+        ).execute.isCompleted
+      )
+    }
   }
 }

@@ -18,3 +18,7 @@ case class ThrowingTask(name: String, delay: FiniteDuration) extends Task {
   override def execute: Future[Unit] =
     Future.failed(new Exception)
 }
+
+case class TimeoutTask(name: String, delay: FiniteDuration) extends Task {
+  override def execute: Future[Unit] = Future.never
+}
