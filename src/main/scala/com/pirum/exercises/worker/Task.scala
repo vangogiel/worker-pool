@@ -13,3 +13,8 @@ sealed trait Task {
 case class SuccessfulTask(name: String, delay: FiniteDuration) extends Task {
   override def execute: Future[Unit] = Future.successful()
 }
+
+case class ThrowingTask(name: String, delay: FiniteDuration) extends Task {
+  override def execute: Future[Unit] =
+    Future.failed(new Exception)
+}

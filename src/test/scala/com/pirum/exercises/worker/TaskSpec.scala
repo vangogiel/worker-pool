@@ -18,5 +18,14 @@ class TaskSpec extends AnyWordSpecLike with Matchers with Eventually {
         ).execute.isCompleted
       )
     }
+
+    "fail if ThrowingTask is specified" in {
+      eventually(
+        ThrowingTask(
+          "test-task",
+          FiniteDuration(1, TimeUnit.SECONDS)
+        ).execute.failed
+      )
+    }
   }
 }
