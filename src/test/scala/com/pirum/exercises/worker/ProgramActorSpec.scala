@@ -82,5 +82,32 @@ class ProgramActorSpec extends AnyWordSpecLike with Eventually {
         timedOutTasksList.length must be(1)
       }
     }
+
+    "process a successful, timeout and throwing tasks" in {
+      val succeededTasksList: mutable.Buffer[String] = ListBuffer[String]()
+      val failedTasksList: mutable.Buffer[String] = ListBuffer[String]()
+      val timedOutTasksList: mutable.Buffer[String] = ListBuffer[String]()
+      val parent = TestProbe()
+      val child = parent.childActorOf(
+        Props(
+          new ProgramActor(
+            succeededTasksList,
+            failedTasksList,
+            timedOutTasksList,
+            List(
+              SuccessfulTask("task1", FiniteDuration(1, TimeUnit.SECONDS)),
+              ThrowingTask("task2", FiniteDuration(1, TimeUnit.SECONDS)),
+              TimeoutTask("task3", FiniteDuration(1, TimeUnit.SECONDS))
+            )
+          )
+        )
+      )
+      child ! ProcessTasks
+      eventually {
+        timedOutTasksList.length must be(1)
+        failedTasksList.length must be(1)
+        succeededTasksList.length must be(1)
+      }
+    }
   }
 }

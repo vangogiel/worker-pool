@@ -5,7 +5,7 @@ import akka.pattern.after
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, TimeoutException}
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 sealed trait Command
 case class ProcessTasks() extends Command
@@ -20,12 +20,14 @@ class ProgramActor(
   override def receive: Receive = { case ProcessTasks =>
     tasks.foreach(task => {
       after(task.delay)(task.execute)
-        .recover {
-          case _: UnsupportedOperationException => failedTasksList += task.name
-          case _: TimeoutException              => timedOutTasksList += task.name
-        }
-        .onComplete { case Success(_) =>
-          succeededTasksList += task.name
+        .onComplete {
+          case Success(_) => succeededTasksList += task.name
+          case Failure(e) =>
+            e match {
+              case _: TimeoutException => timedOutTasksList += task.name
+              case _: UnsupportedOperationException =>
+                failedTasksList += task.name
+            }
         }
     })
   }
