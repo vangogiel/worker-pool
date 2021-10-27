@@ -13,6 +13,7 @@ object Main extends App with Program {
 
   val succeededTasksList: mutable.Buffer[String] = ListBuffer[String]()
   val failedTasksList: mutable.Buffer[String] = ListBuffer[String]()
+  val timedOutTasksList: mutable.Buffer[String] = ListBuffer[String]()
 
   def program(
       tasks: List[Task],
@@ -29,8 +30,8 @@ object Main extends App with Program {
           new ProgramActor(
             succeededTasksList,
             failedTasksList,
-            tasks,
-            timeout
+            timedOutTasksList,
+            tasks
           )(system, executionContext)
         )
       )
