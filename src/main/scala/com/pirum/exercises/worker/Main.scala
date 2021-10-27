@@ -31,13 +31,25 @@ object Main extends App with Program {
             succeededTasksList,
             failedTasksList,
             timedOutTasksList,
-            tasks
+            tasks,
+            timeout
           )(system, executionContext)
         )
       )
     rootActor ! ProcessTasks
+    rootActor ! DisplayResults
   }
 
-  val tasks = List(SuccessfulTask("Task1", FiniteDuration(3, TimeUnit.SECONDS)))
+  val tasks = List(
+    SuccessfulTask("Task1", FiniteDuration(3, TimeUnit.SECONDS)),
+    SuccessfulTask("Task2", FiniteDuration(5, TimeUnit.SECONDS)),
+    ThrowingTask("Task3", FiniteDuration(2, TimeUnit.SECONDS)),
+    TimeoutTask("Task4", FiniteDuration(10, TimeUnit.SECONDS)),
+    SuccessfulTask("Task5", FiniteDuration(3, TimeUnit.SECONDS)),
+    SuccessfulTask("Task6", FiniteDuration(5, TimeUnit.SECONDS)),
+    ThrowingTask("Task7", FiniteDuration(2, TimeUnit.SECONDS)),
+    SuccessfulTask("Task8", FiniteDuration(3, TimeUnit.SECONDS)),
+    SuccessfulTask("Task9", FiniteDuration(5, TimeUnit.SECONDS))
+  )
   program(tasks, FiniteDuration(4, TimeUnit.SECONDS), tasks.size)
 }

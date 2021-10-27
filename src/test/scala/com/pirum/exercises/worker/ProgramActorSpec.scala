@@ -31,7 +31,8 @@ class ProgramActorSpec extends AnyWordSpecLike with Eventually {
             succeededTasksList,
             failedTasksList,
             timedOutTasksList,
-            List(SuccessfulTask("task1", FiniteDuration(1, TimeUnit.SECONDS)))
+            List(SuccessfulTask("task1", FiniteDuration(1, TimeUnit.SECONDS))),
+            FiniteDuration(1, TimeUnit.SECONDS)
           )
         )
       )
@@ -52,7 +53,8 @@ class ProgramActorSpec extends AnyWordSpecLike with Eventually {
             succeededTasksList,
             failedTasksList,
             timedOutTasksList,
-            List(ThrowingTask("task1", FiniteDuration(1, TimeUnit.SECONDS)))
+            List(ThrowingTask("task1", FiniteDuration(1, TimeUnit.SECONDS))),
+            FiniteDuration(1, TimeUnit.SECONDS)
           )
         )
       )
@@ -73,7 +75,8 @@ class ProgramActorSpec extends AnyWordSpecLike with Eventually {
             succeededTasksList,
             failedTasksList,
             timedOutTasksList,
-            List(TimeoutTask("task1", FiniteDuration(1, TimeUnit.SECONDS)))
+            List(TimeoutTask("task1", FiniteDuration(1, TimeUnit.SECONDS))),
+            FiniteDuration(1, TimeUnit.SECONDS)
           )
         )
       )
@@ -98,7 +101,8 @@ class ProgramActorSpec extends AnyWordSpecLike with Eventually {
               SuccessfulTask("task1", FiniteDuration(1, TimeUnit.SECONDS)),
               ThrowingTask("task2", FiniteDuration(1, TimeUnit.SECONDS)),
               TimeoutTask("task3", FiniteDuration(1, TimeUnit.SECONDS))
-            )
+            ),
+            FiniteDuration(1, TimeUnit.SECONDS)
           )
         )
       )
