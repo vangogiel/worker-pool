@@ -14,7 +14,7 @@ class ProgramActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
 
   "ProgramActor" should {
     "process a successful task" in {
-      val probe = testKit.createTestProbe[Action]
+      val probe = testKit.createTestProbe[TaskResultActor.Command]()
       val parent = TestProbe()
       val child = parent.childActorOf(
         Props(
@@ -25,11 +25,11 @@ class ProgramActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
         SuccessfulTask("Task1", FiniteDuration(1, TimeUnit.SECONDS)),
         probe.ref
       )
-      probe.expectMessage(Succeeded("Task1"))
+      probe.expectMessage(TaskResultActor.Succeeded("Task1"))
     }
 
     "process a throwing task" in {
-      val probe = testKit.createTestProbe[Action]
+      val probe = testKit.createTestProbe[TaskResultActor.Command]
       val parent = TestProbe()
       val child = parent.childActorOf(
         Props(
@@ -40,11 +40,11 @@ class ProgramActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
         ThrowingTask("Task1", FiniteDuration(1, TimeUnit.SECONDS)),
         probe.ref
       )
-      probe.expectMessage(Failed("Task1"))
+      probe.expectMessage(TaskResultActor.Failed("Task1"))
     }
 
     "process a timeout task" in {
-      val probe = testKit.createTestProbe[Action]
+      val probe = testKit.createTestProbe[TaskResultActor.Command]
       val parent = TestProbe()
       val child = parent.childActorOf(
         Props(
@@ -55,7 +55,7 @@ class ProgramActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
         TimeoutTask("Task1", FiniteDuration(1, TimeUnit.SECONDS)),
         probe.ref
       )
-      probe.expectMessage(TimedOut("Task1"))
+      probe.expectMessage(TaskResultActor.TimedOut("Task1"))
     }
   }
 }

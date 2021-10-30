@@ -3,11 +3,12 @@ package com.pirum.exercises.worker
 import akka.actor.typed.ActorRef
 import akka.actor.{ActorSystem, Timers}
 import akka.pattern.after
+import com.pirum.exercises.worker.TaskResultActor.{Failed, Succeeded, TimedOut}
 
 import scala.concurrent.{ExecutionContext, TimeoutException}
 import scala.util.{Failure, Success}
 
-case class ProcessTask(task: Task, replyTo: ActorRef[Action])
+case class ProcessTask(task: Task, replyTo: ActorRef[TaskResultActor.Command])
 
 class ProgramActor(implicit
     actorSystem: ActorSystem,

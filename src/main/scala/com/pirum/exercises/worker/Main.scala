@@ -1,6 +1,10 @@
 package com.pirum.exercises.worker
 
 import akka.actor._
+import com.pirum.exercises.worker.TaskResultActor.{
+  CheckState,
+  CheckStateAndFinalise
+}
 
 import java.util.concurrent.{Executors, TimeUnit}
 import scala.concurrent.ExecutionContext
@@ -20,26 +24,32 @@ object Main extends App with Program {
       ExecutionContext.fromExecutor(
         Executors.newFixedThreadPool(workers)
       )
-    val monitoringActor = typed.ActorSystem(
+    val taskResultActor = typed.ActorSystem(
       TaskResultActor.processCompletedTaskActor(
         SucceededTasks(List.empty),
         FailedTasks(List.empty),
         TimedOutTasks(List.empty)
       ),
+      "task-result-actor"
+    )
+    val monitoringActor = typed.ActorSystem(
+      MonitoringActor.summariseResultsActor(tasks),
       "monitoring-actor"
     )
     val programActor =
       system.actorOf(Props(new ProgramActor()(system, tasksEC)))
-    tasks.foreach(task => programActor ! ProcessTask(task, monitoringActor))
+    tasks.foreach(task => programActor ! ProcessTask(task, taskResultActor))
 
     system.scheduler.scheduleOnce(timeout) {
-      monitoringActor ! AttemptResultNow(tasks)
+      taskResultActor ! CheckStateAndFinalise(monitoringActor)
     }(monitoringEC)
 
     system.scheduler.scheduleAtFixedRate(
       FiniteDuration(0, TimeUnit.MILLISECONDS),
       FiniteDuration(1, TimeUnit.MILLISECONDS)
-    )(() => monitoringActor ! CheckAndAttemptResult(tasks))(monitoringEC)
+    )(() => taskResultActor ! CheckState(monitoringActor))(
+      monitoringEC
+    )
   }
 
   val tasks = List(
