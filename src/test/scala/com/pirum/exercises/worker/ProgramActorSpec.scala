@@ -7,6 +7,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.TimeoutException
 import scala.concurrent.duration.FiniteDuration
 
 class ProgramActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
@@ -22,7 +23,7 @@ class ProgramActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
         )
       )
       child ! ProcessTask(
-        SuccessfulTask("Task1", FiniteDuration(1, TimeUnit.SECONDS)),
+        Task("Task1", () => Thread.sleep(100)),
         probe.ref
       )
       probe.expectMessage(TaskResultActor.Succeeded("Task1"))
@@ -37,25 +38,10 @@ class ProgramActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
         )
       )
       child ! ProcessTask(
-        ThrowingTask("Task1", FiniteDuration(1, TimeUnit.SECONDS)),
+        Task("Task1", () => throw new UnsupportedOperationException),
         probe.ref
       )
       probe.expectMessage(TaskResultActor.Failed("Task1"))
-    }
-
-    "process a timeout task" in {
-      val probe = testKit.createTestProbe[TaskResultActor.Command]
-      val parent = TestProbe()
-      val child = parent.childActorOf(
-        Props(
-          new ProgramActor()
-        )
-      )
-      child ! ProcessTask(
-        TimeoutTask("Task1", FiniteDuration(1, TimeUnit.SECONDS)),
-        probe.ref
-      )
-      probe.expectMessage(TaskResultActor.TimedOut("Task1"))
     }
   }
 }
