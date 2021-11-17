@@ -1,28 +1,31 @@
-package com.pirum.exercises.worker
+package com.pirum.exercises.worker.actors
 
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import com.pirum.exercises.worker.MonitoringActor.{
-  CompleteResultSummaryNow,
-  AttemptResultSummary
+import akka.actor.typed.{ActorRef, Behavior}
+import com.pirum.exercises.worker.actors.MonitoringActor.{
+  AttemptResultSummary,
+  CompleteResultSummaryNow
 }
 
 case class SucceededTasks(events: List[String])
 case class FailedTasks(events: List[String])
 case class TimedOutTasks(events: List[String])
 
-object TaskResultActor {
+object TasksStateActor {
   sealed trait Command
   case class Succeeded(task: String) extends Command
   case class Failed(task: String) extends Command
   case class TimedOut(task: String) extends Command
-  case class CheckState(replyTo: ActorRef[MonitoringActor.Command])
-      extends Command
-  case class CheckStateAndFinalise(
-      replyTo: ActorRef[MonitoringActor.Command]
+  case class AttemptToFinalise(
+      monitoringActor: ActorRef[MonitoringActor.Command],
+      summaryActor: ActorRef[SummaryActor.Command]
+  ) extends Command
+  case class ForceFinalise(
+      monitoringActor: ActorRef[MonitoringActor.Command],
+      summaryActor: ActorRef[SummaryActor.Command]
   ) extends Command
 
-  def processCompletedTaskActor(
+  def apply(
       succeeded: SucceededTasks,
       failed: FailedTasks,
       timedOut: TimedOutTasks
@@ -30,28 +33,37 @@ object TaskResultActor {
     {
       message match {
         case Succeeded(taskName) =>
-          processCompletedTaskActor(
+          apply(
             SucceededTasks(succeeded.events :+ taskName),
             failed,
             timedOut
           )
         case Failed(taskName) =>
-          processCompletedTaskActor(
+          apply(
             succeeded,
             FailedTasks(failed.events :+ taskName),
             timedOut
           )
         case TimedOut(taskName) =>
-          processCompletedTaskActor(
+          apply(
             succeeded,
             failed,
             TimedOutTasks(timedOut.events :+ taskName)
           )
-        case CheckState(replyTo) =>
-          replyTo ! AttemptResultSummary(succeeded, failed, timedOut)
+        case AttemptToFinalise(monitoringActor, summaryActor) =>
+          monitoringActor ! AttemptResultSummary(
+            succeeded,
+            failed,
+            timedOut,
+            summaryActor
+          )
           Behaviors.same
-        case CheckStateAndFinalise(replyTo) =>
-          replyTo ! CompleteResultSummaryNow(succeeded, failed, timedOut)
+        case ForceFinalise(monitoringActor, summaryActor) =>
+          monitoringActor ! CompleteResultSummaryNow(
+            succeeded,
+            failed,
+            summaryActor
+          )
           Behaviors.stopped
       }
     }

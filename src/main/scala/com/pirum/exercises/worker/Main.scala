@@ -1,55 +1,24 @@
 package com.pirum.exercises.worker
 
-import akka.actor._
-import com.pirum.exercises.worker.TaskResultActor.{
-  CheckState,
-  CheckStateAndFinalise
-}
+import akka.actor.typed.ActorSystem
+import com.pirum.exercises.worker.actors.RootActor.StartAll
+import com.pirum.exercises.worker.actors._
+import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 
-import java.util.concurrent.{Executors, TimeUnit}
-import scala.concurrent.{ExecutionContext, TimeoutException}
+import scala.concurrent.TimeoutException
 import scala.concurrent.duration.FiniteDuration
 
 object Main extends App with Program {
-  implicit val system: ActorSystem = ActorSystem("worker-pool")
 
   def program(
       tasks: List[Task],
       timeout: FiniteDuration,
       workers: Int
   ): Unit = {
-    val monitoringEC: ExecutionContext =
-      ExecutionContext.fromExecutor(Executors.newFixedThreadPool(2))
-    val tasksEC: ExecutionContext =
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(workers)
-      )
-    val taskResultActor = typed.ActorSystem(
-      TaskResultActor.processCompletedTaskActor(
-        SucceededTasks(List.empty),
-        FailedTasks(List.empty),
-        TimedOutTasks(List.empty)
-      ),
-      "task-result-actor"
-    )
-    val monitoringActor = typed.ActorSystem(
-      MonitoringActor.summariseResultsActor(tasks),
-      "monitoring-actor"
-    )
-    val programActor =
-      system.actorOf(Props(new ProgramActor()(system, tasksEC)))
-    tasks.foreach(task => programActor ! ProcessTask(task, taskResultActor))
-
-    system.scheduler.scheduleOnce(timeout) {
-      taskResultActor ! CheckStateAndFinalise(monitoringActor)
-    }(monitoringEC)
-
-    system.scheduler.scheduleAtFixedRate(
-      FiniteDuration(0, TimeUnit.MILLISECONDS),
-      FiniteDuration(1, TimeUnit.MILLISECONDS)
-    )(() => taskResultActor ! CheckState(monitoringActor))(
-      monitoringEC
-    )
+    val system: ActorSystem[RootActor.Command] = {
+      ActorSystem(RootActor(tasks, timeout), "root-actor")
+    }
+    system ! StartAll()
   }
 
   val tasks = List(
@@ -59,7 +28,7 @@ object Main extends App with Program {
     Task("Task4", () => Thread.sleep(6000)),
     Task("Task5", () => Thread.sleep(1000)),
     Task("Task6", () => Thread.sleep(1000)),
-    Task("Task7", () => throw new UnsupportedOperationException),
+    Task("Task7", () => throw new TimeoutException),
     Task("Task8", () => Thread.sleep(1000)),
     Task("Task9", () => Thread.sleep(1000)),
     Task("Task10", () => Thread.sleep(1000)),
@@ -70,5 +39,5 @@ object Main extends App with Program {
     Task("Task15", () => Thread.sleep(1000)),
     Task("Task16", () => throw new UnsupportedOperationException)
   )
-  program(tasks, FiniteDuration(4, TimeUnit.SECONDS), tasks.size)
+  program(tasks, 5.seconds, tasks.size)
 }

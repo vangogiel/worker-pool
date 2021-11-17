@@ -1,39 +1,34 @@
-package com.pirum.exercises.worker
+package com.pirum.exercises.worker.actors
 
 import akka.actor.ActorSystem
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import com.pirum.exercises.worker.MonitoringActor.{
-  CompleteResultSummaryNow,
-  AttemptResultSummary
+import com.pirum.exercises.worker.actors.MonitoringActor.{
+  AttemptResultSummary,
+  CompleteResultSummaryNow
 }
-import com.pirum.exercises.worker.TaskResultActor.{
-  CheckState,
-  CheckStateAndFinalise,
-  Failed,
-  Succeeded,
-  TimedOut
-}
+import com.pirum.exercises.worker.actors.TasksStateActor._
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.wordspec.AnyWordSpecLike
 
-class TaskResultActorSpec
+class TasksStateActorSpec
     extends ScalaTestWithActorTestKit
     with AnyWordSpecLike {
   implicit lazy val actorSystem: ActorSystem = ActorSystem("TestActor")
 
   "TaskResultActor" should {
     "increment succeeded" in {
-      val probe = testKit.createTestProbe[MonitoringActor.Command]()
+      val monitoringProbe = testKit.createTestProbe[MonitoringActor.Command]()
+      val summaryProbe = testKit.createTestProbe[SummaryActor.Command]()
       val subject = testKit.spawn(
-        TaskResultActor.processCompletedTaskActor(
+        TasksStateActor(
           SucceededTasks(List.empty),
           FailedTasks(List.empty),
           TimedOutTasks(List.empty)
         )
       )
       subject ! Succeeded("task1")
-      subject ! CheckState(probe.ref)
-      probe
+      subject ! AttemptToFinalise(monitoringProbe.ref, summaryProbe.ref)
+      monitoringProbe
         .expectMessageType[AttemptResultSummary]
         .succeeded
         .events
@@ -41,17 +36,18 @@ class TaskResultActorSpec
     }
 
     "increment failed" in {
-      val probe = testKit.createTestProbe[MonitoringActor.Command]()
+      val monitoringProbe = testKit.createTestProbe[MonitoringActor.Command]()
+      val summaryProbe = testKit.createTestProbe[SummaryActor.Command]()
       val subject = testKit.spawn(
-        TaskResultActor.processCompletedTaskActor(
+        TasksStateActor(
           SucceededTasks(List.empty),
           FailedTasks(List.empty),
           TimedOutTasks(List.empty)
         )
       )
       subject ! Failed("task1")
-      subject ! CheckState(probe.ref)
-      probe
+      subject ! AttemptToFinalise(monitoringProbe.ref, summaryProbe.ref)
+      monitoringProbe
         .expectMessageType[AttemptResultSummary]
         .failed
         .events
@@ -59,17 +55,18 @@ class TaskResultActorSpec
     }
 
     "increment timedOut" in {
-      val probe = testKit.createTestProbe[MonitoringActor.Command]()
+      val monitoringProbe = testKit.createTestProbe[MonitoringActor.Command]()
+      val summaryProbe = testKit.createTestProbe[SummaryActor.Command]()
       val subject = testKit.spawn(
-        TaskResultActor.processCompletedTaskActor(
+        TasksStateActor(
           SucceededTasks(List.empty),
           FailedTasks(List.empty),
           TimedOutTasks(List.empty)
         )
       )
       subject ! TimedOut("task1")
-      subject ! CheckState(probe.ref)
-      probe
+      subject ! AttemptToFinalise(monitoringProbe.ref, summaryProbe.ref)
+      monitoringProbe
         .expectMessageType[AttemptResultSummary]
         .timedOut
         .events
@@ -77,29 +74,34 @@ class TaskResultActorSpec
     }
 
     "check state" in {
-      val probe = testKit.createTestProbe[MonitoringActor.Command]()
+      val monitoringProbe = testKit.createTestProbe[MonitoringActor.Command]()
+      val summaryProbe = testKit.createTestProbe[SummaryActor.Command]()
       val subject = testKit.spawn(
-        TaskResultActor.processCompletedTaskActor(
+        TasksStateActor(
           SucceededTasks(List.empty),
           FailedTasks(List.empty),
           TimedOutTasks(List.empty)
         )
       )
-      subject ! CheckState(probe.ref)
-      probe.expectMessageType[AttemptResultSummary]
+      subject ! AttemptToFinalise(monitoringProbe.ref, summaryProbe.ref)
+      monitoringProbe.expectMessageType[AttemptResultSummary]
     }
 
     "check state and finalise" in {
-      val probe = testKit.createTestProbe[MonitoringActor.Command]()
+      val monitoringProbe = testKit.createTestProbe[MonitoringActor.Command]()
+      val summaryProbe = testKit.createTestProbe[SummaryActor.Command]()
       val subject = testKit.spawn(
-        TaskResultActor.processCompletedTaskActor(
+        TasksStateActor(
           SucceededTasks(List.empty),
           FailedTasks(List.empty),
           TimedOutTasks(List.empty)
         )
       )
-      subject ! CheckStateAndFinalise(probe.ref)
-      probe.expectMessageType[CompleteResultSummaryNow]
+      subject ! ForceFinalise(
+        monitoringProbe.ref,
+        summaryProbe.ref
+      )
+      monitoringProbe.expectMessageType[CompleteResultSummaryNow]
     }
   }
 }
